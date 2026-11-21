@@ -31,11 +31,51 @@ import 'package:file_picker/file_picker.dart';
 
 // 👇 সার্ভারের ঠিকানা। নিজের কম্পিউটারে চালালে এটাই থাকবে।
 //    পরে server অনলাইনে দিলে এখানে সেই ঠিকানা বসাবেন (যেমন https://myshop-api.onrender.com)
-const String apiBaseUrl = 'http://localhost:3000';
+String get apiBaseUrl {
+  const raw = String.fromEnvironment('apiBaseUrl', defaultValue: 'http://localhost:3000');
+  return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
+}
+
+// Backend keep-alive: pings /api/health every 10 min to keep Render awake.
+class _BackendKeepAlive with WidgetsBindingObserver {
+  Timer? _timer;
+  bool _active = true;
+  void start() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(minutes: 10), (_) => _ping());
+    WidgetsBinding.instance.addObserver(this);
+  }
+  Future<void> _ping() async {
+    if (!_active) return;
+    try {
+      await http.get(Uri.parse('$apiBaseUrl/api/health'));
+    } catch (_) {}
+  }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _active = true;
+      _ping();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      _active = false;
+    }
+  }
+  void stop() {
+    _timer?.cancel();
+    _timer = null;
+    WidgetsBinding.instance.removeObserver(this);
+  }
+}
+
+final _keepAlive = _BackendKeepAlive();
 
 void main() {
   runApp(const ShopApp());
   store.loadPublic(); // অ্যাপ চালু হলেই database থেকে ডাটা আনা শুরু
+  _keepAlive.start();
 }
 
 // ============================================================================
