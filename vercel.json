@@ -1,7 +1,7 @@
 {
-  "installCommand": "cd frontend && if [ ! -d .flutter ]; then git clone https://github.com/flutter/flutter.git -b stable --depth 1 .flutter; fi && export PATH=\"$PATH:$(pwd)/.flutter/bin\" && flutter pub get",
-  "buildCommand": "cd frontend && export PATH=\"$PATH:$(pwd)/.flutter/bin\" && flutter build web --release",
-  "outputDirectory": "frontend/build/web",
+  "installCommand": "if [ ! -d .flutter ]; then git clone https://github.com/flutter/flutter.git -b stable --depth 1 .flutter; fi && export PATH=\"$PATH:$(pwd)/.flutter/bin\" && flutter pub get",
+  "buildCommand": "export PATH=\"$PATH:$(pwd)/.flutter/bin\" && flutter build web --release",
+  "outputDirectory": "build/web",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
